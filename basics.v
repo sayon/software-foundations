@@ -11,6 +11,8 @@ Inductive nat : Type :=
   | S : nat -> nat
 .
 
+Definition one := S O.
+
 Definition pred (n: nat) := 
   match n with 
   | O => O
@@ -70,24 +72,24 @@ Fixpoint leq (n m : nat) : bool :=
   | S n', S m' => leq n' m'
   end.
 
-Definition and ( n m : bool) : bool := 
+Definition andb ( n m : bool) : bool := 
   match n,m with
   | True, True => True
   | _, _ => False
   end.
-Definition not (n:bool) : bool :=
+Definition notb (n:bool) : bool :=
   match n with
   | True => False
   | False => True
   end.
-Definition or (n m: bool) : bool :=
+Definition orb (n m: bool) : bool :=
   match n,m with
     |False,False => False
     |_,_ => True
   end.
 
 Definition less (n m: nat) : bool :=
-  and  (leq n m) (not (eq n m ) ).  
+  andb  (leq n m) (notb (eq n m ) ).  
 
 
 Example test_less: (less (S(S(S(S O)))) (S(S(S O) ))) = False.
@@ -149,7 +151,6 @@ rewrite -> H.
 reflexivity.
 Qed.
 
-Definition one := S O.
 
 Theorem plus_1_neq_0: forall n : nat, 
                         eq  (n + one) O = False.
@@ -164,7 +165,7 @@ Qed.
 
 
 Theorem double_negation: forall b : bool,
-                           not (not b) = b.
+                           notb (notb b) = b.
 Proof.
 destruct b as [|b'].
 simpl.
@@ -189,7 +190,7 @@ Qed.
 
 Theorem not_fn_applied_twice: forall 
                                      ( f : bool -> bool ), 
-                                     ( forall (x:bool), f x = not x ) ->
+                                     ( forall (x:bool), f x = notb x ) ->
                                      forall (b: bool), f (f b) = b.
 Proof.
 intros f H b.
@@ -261,7 +262,7 @@ reflexivity.
 simpl.
 
 reflexivity.
-(*
+
 Theorem zero_absorption_r: forall n: nat, n + O = n.
 intros n.
 
@@ -277,4 +278,4 @@ intros n m.*)
 
 
 
-
+End Playground1.
