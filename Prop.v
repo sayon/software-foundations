@@ -300,12 +300,40 @@ Qed.
 
 Lemma helper_g_times2 : forall x y z, x + (z + y)= z + x + y.
 Proof.
+  intros.
+  rewrite plus_assoc.
+  replace (x+z) with (z + x).
+  reflexivity.
+  apply plus_comm.
+Qed.
 
 Theorem g_times2: forall n, gorgeous n -> gorgeous (2*n).
 Proof.
    intros n H. simpl. 
+   rewrite plus_0_r.
    induction H.
-   (* FILL IN HERE *) Admitted.
+   apply g_0.
+   replace (3 + n + (3 + n)) with (3 + (3 + (n + n))).
+   apply g_plus3, g_plus3, IHgorgeous.
+   
+   rewrite helper_g_times2.
+   rewrite plus_assoc.
+   symmetry.
+   rewrite helper_g_times2.
+   rewrite plus_assoc.   
+   reflexivity.
+ 
+   replace (5 + n + (5 + n)) with (5 + (5 + (n + n))).
+   apply g_plus5, g_plus5, IHgorgeous.
+   
+   rewrite helper_g_times2.
+   rewrite plus_assoc.
+   symmetry.
+   rewrite helper_g_times2.
+   rewrite plus_assoc.   
+   reflexivity.
+Qed.
+ 
 (** [] *)
 
 
@@ -350,7 +378,15 @@ Inductive ev : nat -> Prop :=
 Theorem double_even : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  rewrite double_plus.
+  induction n.
+  apply ev_0.
+  simpl.
+  rewrite <- plus_n_Sm.
+  apply ev_SS.
+  exact IHn.
+Qed.
 (** [] *)
 
 
@@ -436,7 +472,14 @@ Qed.
 Theorem ev_sum : forall n m,
    ev n -> ev m -> ev (n+m).
 Proof. 
-  (* FILL IN HERE *) Admitted.
+   intros.
+   induction H.
+   exact H0.
+   simpl.
+   apply ev_SS.   
+   exact IHev.
+Qed.
+      
 (** [] *)
 
 
@@ -471,6 +514,7 @@ Theorem SSev__even : forall n,
 Proof.
   intros n E. 
   inversion E as [| n' E']. 
+
   apply E'. Qed.
 
 (** These uses of [inversion] may seem a bit mysterious at first.
@@ -509,7 +553,11 @@ Proof.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  inversion H1.
+  apply H3.
+Qed.
 
 (** The [inversion] tactic can also be used to derive goals by showing
     the absurdity of a hypothesis. *)
@@ -517,7 +565,12 @@ Proof.
 Theorem even5_nonsense : 
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  inversion H.
+  inversion H1.
+  inversion H3.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (ev_ev__ev) *)
@@ -527,7 +580,14 @@ Proof.
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H0.
+  exact H.
+  inversion H.
+  apply IHev.
+  exact H2.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (ev_plus_plus) *)
@@ -535,10 +595,11 @@ Proof.
     induction or even case analysis is needed, but some of the rewriting
     may be tedious. *)
 
-Theorem ev_plus_plus : forall n m p,
+(**Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* FILL IN HERE *) Admitted. **)
+
 (** [] *)
 
 

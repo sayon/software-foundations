@@ -882,15 +882,6 @@ Qed.
 (** **** Exercise: 3 stars, advanced (bag_proofs) *)
 (** Here are a couple of little theorems to prove about your
     definitions about bags in the previous problem. *)
-
-Fixpoint ble_nat (n m: nat) :=
-  match n,m with 
-    | 0, 0 => true 
-    | S _, 0 => false  
-    | 0, S _ => true  
-    | S n', S m' => ble_nat n' m'
-  end.
-
 Theorem count_member_nonzero : forall (s : bag),
   ble_nat 1 (count 1 (1 :: s)) = true.
 Proof.
@@ -1191,7 +1182,7 @@ Proof.
   simpl.
   rewrite H.
   reflexivity.
-
+Qed.
 (** [] *)
 
 

@@ -668,7 +668,7 @@ Proof.
   left. apply HP.
 Qed.
 
-Theorem excluded_middle__de_morgan_not_and_not: excluded_middle -> de_morgan_not_and_not.
+(**Theorem excluded_middle__de_morgan_not_and_not: excluded_middle -> de_morgan_not_and_not.**)
 (**todo this and other theorems **)
   
 
@@ -878,7 +878,6 @@ Proof.
   apply H.
 Qed.
 
-  (* FILL IN HERE *) Admitted.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (not_exists_dist) *)
@@ -912,7 +911,22 @@ Qed.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-
+  intros X P Q.
+  split.
+  intros H.
+  inversion H.
+  inversion H0.
+  left. exists witness. apply H1.
+  right. exists witness. apply H1.
+  intros H.
+  inversion H.
+  inversion H0.
+  exists witness.
+  left. apply H1.
+  inversion H0.
+  exists witness.
+  right. apply H1.
+Qed.
 
 
 (** [] *)
@@ -957,7 +971,12 @@ Notation "x = y" := (eq x y)
 Lemma leibniz_equality : forall (X : Type) (x y: X), 
  x = y -> forall P : X -> Prop, P x -> P y.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros X x y H P H0.
+  induction H.
+  exact H0.
+Qed.
+
+
 (** [] *)
 
 (** We can use
@@ -1076,7 +1095,14 @@ Proof.
 Theorem override_shadow' : forall (X:Type) x1 x2 k1 k2 (f : nat->X),
   (override' (override' f k1 x2) k1 x1) k2 = (override' f k1 x1) k2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x1 x2 k1 k2 f.
+  unfold override'.
+  destruct (eq_nat_dec k1 k2).
+  reflexivity.
+  reflexivity.
+Qed.
+
+
 (** [] *)
 
 (* ####################################################### *)
@@ -1136,7 +1162,15 @@ Proof.
 Lemma dist_and_or_eq_implies_and : forall P Q R,
        P /\ (Q \/ R) /\ Q = R -> P/\Q.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros P Q R H.
+  inversion H.
+  inversion H1.
+  inversion H2.
+  split. apply H0. apply H4.
+  rewrite H3.
+  split. apply H0. apply H4.
+Qed.
+
 (** [] *)
 
 
@@ -1151,7 +1185,8 @@ Proof.
     asserts that [P] is true for every element of the list [l]. *)
 
 Inductive all (X : Type) (P : X -> Prop) : list X -> Prop :=
-  (* FILL IN HERE *)
+   | all_base: all X P nil
+   | all_trans: forall (l: list X) (x: X), P x -> all X P l -> all X P (x::l) 
 .
 
 (** Recall the function [forallb], from the exercise
@@ -1170,7 +1205,39 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
     Are there any important properties of the function [forallb] which
     are not captured by your specification? *)
 
-(* FILL IN HERE *)
+Theorem forallb_correct: forall {X : Type} (l : list X) (f : X -> bool ),
+    all X (fun x => f x = true) l <-> forallb f l = true.
+Proof.
+  intros X.
+  induction l.
+  intros f. split.
+
+  intros H_. reflexivity.
+
+  intros H.
+  apply all_base.
+
+  intros f.
+  split.
+  intros H.
+  inversion H.
+  simpl.
+  rewrite H2. simpl. apply IHl. exact H3.
+
+  simpl.
+  destruct (f x) eqn: Hfx.
+  simpl. 
+  intros H.
+  apply all_trans.  
+  
+  exact Hfx.
+  apply IHl.  exact H.
+  intro H. inversion H.
+Qed.
+
+
+
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (filter_challenge) *)
@@ -1223,21 +1290,121 @@ Inductive appears_in {X:Type} (a:X) : list X -> Prop :=
     Here's a pair of warm-ups about [appears_in].
 *)
 
+Lemma concat_prepend: forall (X: Type) (x: X) (xs ys: list X),
+    (x::xs) ++ ys = [x] ++ (xs ++ ys).
+Proof.
+  intros X x xs ys.
+  reflexivity.
+Qed.
+
+
+Lemma appears_in_cons: forall (X:Type) (xs: list X) (x:X) (el:X), 
+     appears_in el (x::xs) <-> appears_in el [x] \/ appears_in el xs .
+Proof.
+  intros X xs x el.
+  split.
+  intros H.
+  inversion H.
+  left.  
+  apply ai_here.
+  right. exact H1.
+  intro H.
+  inversion H.
+  inversion H0.
+  apply ai_here.
+  inversion H2. (*contradiction*)
+  
+  apply ai_later.
+  apply H0.
+Qed.  
+
+  
 Lemma appears_in_app : forall (X:Type) (xs ys : list X) (x:X), 
      appears_in x (xs ++ ys) -> appears_in x xs \/ appears_in x ys.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X xs ys x.
+  generalize dependent ys.
+  induction xs.
+  intros ys H.
+  inversion H.
+  simpl in H0.
+  simpl in H.
+  right.
+  rewrite <- H0.  
+  apply ai_here.
+  
+  simpl in H1.
+  right.
+  simpl in H.
+  apply H.
+  intros ys H.
+  simpl in H.
+  apply appears_in_cons in H.
+  inversion H.
+  left.
+  apply appears_in_cons.
+  left. exact H0.
+  apply IHxs in H0.
+  inversion H0.
+  left. apply ai_later. apply H1.
+  right. apply H1.
+Qed.
+
+ 
+
+Lemma app_nil_end: forall (X:Type) (xs: list X),
+   xs ++ [] = xs.
+Proof.
+   induction xs.
+   reflexivity.
+   simpl.
+   rewrite IHxs.
+   reflexivity.
+Qed.
+        
+
+Lemma appears_in_app_any: forall (X:Type) (xs ys: list X) (x:X),
+     appears_in x xs -> appears_in x (xs ++ ys).
+Proof.
+  intros X xs ys x H.
+  induction H.
+  simpl.
+  apply ai_here.
+  simpl.
+  apply ai_later.
+  apply IHappears_in.
+Qed.
+
+Lemma appears_in_app_any_snd: forall (X:Type) (xs ys: list X) (x:X),
+     appears_in x ys -> appears_in x (xs ++ ys).
+Proof.
+  intros X xs ys x H.
+  induction xs.
+  apply H.
+  simpl.
+  apply ai_later.
+  exact IHxs.
+Qed.
 
 Lemma app_appears_in : forall (X:Type) (xs ys : list X) (x:X), 
      appears_in x xs \/ appears_in x ys -> appears_in x (xs ++ ys).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X xs ys x H.
+  inversion H.
+  apply appears_in_app_any.
+  exact H0.
+  apply appears_in_app_any_snd.
+  exact H0.
+Qed.
+  
 
 (** Now use [appears_in] to define a proposition [disjoint X l1 l2],
     which should be provable exactly when [l1] and [l2] are
     lists (with elements of type X) that have no elements in common. *)
+Check all.
 
-(* FILL IN HERE *)
+Definition disjoint (X:Type) (L1 L2: list X) := (forall x, appears_in x L1 -> ~ (appears_in x L2) ) /\  (forall x, appears_in x L1 -> ~ (appears_in x L2) ).
+
 
 (** Next, use [appears_in] to define an inductive proposition
     [no_repeats X l], which should be provable exactly when [l] is a
@@ -1246,12 +1413,15 @@ Proof.
     [no_repeats bool []] should be provable, while [no_repeats nat
     [1,2,1]] and [no_repeats bool [true,true]] should not be.  *)
 
-(* FILL IN HERE *)
+Inductive no_repeats {X:Type} : list X -> Prop := 
+   | no_repeats_base: no_repeats []
+   | no_repeats_trans: forall x l, no_repeats l -> ~(appears_in x l) -> no_repeats (x::l)
+.
+
 
 (** Finally, state and prove one or more interesting theorems relating
     [disjoint], [no_repeats] and [++] (list append).  *)
 
-(* FILL IN HERE *)
 (** [] *)
 
 
@@ -1269,8 +1439,9 @@ Proof.
     does not stutter.) *)
 
 Inductive nostutter:  list nat -> Prop :=
- (* FILL IN HERE *)
-.
+  | nostutter_base: nostutter []
+  | nostutter_single: forall x, nostutter [x]
+  | nostutter_trans: forall (x y: nat) (xs: list nat), nostutter xs ->  x<>y -> nostutter (y::xs) ->  nostutter (x::y::xs).
 
 (** Make sure each of these tests succeeds, but you are free
     to change the proof if the given one doesn't work for you.
@@ -1285,32 +1456,25 @@ Inductive nostutter:  list nat -> Prop :=
     tactics.  *)
 
 Example test_nostutter_1:      nostutter [3;1;4;1;5;6].
-(* FILL IN HERE *) Admitted.
-(* 
-  Proof. repeat constructor; apply beq_nat_false; auto. Qed.
-*)
+Proof.
+   repeat constructor; apply beq_nat_false; auto. Qed.
 
 Example test_nostutter_2:  nostutter [].
-(* FILL IN HERE *) Admitted.
-(* 
   Proof. repeat constructor; apply beq_nat_false; auto. Qed.
-*)
 
 Example test_nostutter_3:  nostutter [5].
-(* FILL IN HERE *) Admitted.
-(* 
   Proof. repeat constructor; apply beq_nat_false; auto. Qed.
-*)
 
 Example test_nostutter_4:      not (nostutter [3;1;1;4]).
-(* FILL IN HERE *) Admitted.
-(* 
-  Proof. intro.
-  repeat match goal with 
-    h: nostutter _ |- _ => inversion h; clear h; subst 
-  end.
-  contradiction H1; auto. Qed.
-*)
+  Proof. 
+  unfold not.
+  intros H.
+  inversion H.
+  inversion H5.
+  apply H10.
+  reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (pigeonhole principle) *)
@@ -1326,20 +1490,41 @@ Example test_nostutter_4:      not (nostutter [3;1;1;4]).
 Lemma app_length : forall (X:Type) (l1 l2 : list X),
   length (l1 ++ l2) = length l1 + length l2. 
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros X l1 l2.
+  induction l1.
+  reflexivity.
+  simpl.
+  rewrite IHl1.
+  reflexivity.
+Qed.
 
 Lemma appears_in_app_split : forall (X:Type) (x:X) (l:list X),
   appears_in x l -> 
   exists l1, exists l2, l = l1 ++ (x::l2).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X x l H.
+  induction H.
+  exists [].
+  exists l.
+  reflexivity.
+  inversion IHappears_in.
+  inversion H0.
+  exists (b::witness).
+  exists witness0.
+  simpl.
+  rewrite H1.
+  reflexivity.
+Qed.
 
+
+  
 (** Now define a predicate [repeats] (analogous to [no_repeats] in the
    exercise above), such that [repeats X l] asserts that [l] contains
    at least one repeated element (of type [X]).  *)
 
 Inductive repeats {X:Type} : list X -> Prop :=
-  (* FILL IN HERE *)
+  | repeats_base: forall x l, appears_in x l -> repeats (x::l)
+  | repeats_trans: forall x l, repeats l -> repeats (x::l)
 .
 
 (** Now here's a way to formalize the pigeonhole principle. List [l2]
@@ -1348,13 +1533,101 @@ Inductive repeats {X:Type} : list X -> Prop :=
    at least two items must have the same label.  You will almost
    certainly need to use the [excluded_middle] hypothesis. *)
 
+(* Todo finish that sh~~
+
+
 Theorem pigeonhole_principle: forall (X:Type) (l1 l2:list X),
   excluded_middle -> 
   (forall x, appears_in x l1 -> appears_in x l2) -> 
   length l2 < length l1 -> 
   repeats l1.  
 Proof.  intros X l1. induction l1.
-  (* FILL IN HERE *) Admitted.
+  intros l2 ex_mid H0 Hlen.
+  inversion Hlen.
+  intros l2 ex_mid Happ Hlen.
+  
+  assert ((appears_in x l1) \/ ~(appears_in x l1)).
+  apply ex_mid.
+  assert ((appears_in x l2) \/ ~(appears_in x l2)).
+  apply ex_mid.
+  assert ((repeats l1) \/ ~(repeats l1)).
+  apply ex_mid.
+  assert ((repeats l2) \/ ~(repeats l2)).
+  apply ex_mid.
+  inversion H1.
+  apply repeats_trans. exact H3.
+  
+
+  apply IHl1.
+
+  inversion H3.
+  apply repeats_trans, H5. 
+  apply repeats_trans.
+  apply IHl1 with l2.
+  apply ex_mid.
+  intros x0 H6.
+  apply H0.
+  apply ai_later.
+  apply H6.
+  inversion H1.
+    
+  apply repeats_base.
+  
+
+
+  apply repeats_base.
+  inversion H.
+  inversion H2.
+  exact H3.
+  exact H3.
+  
+     
+  
+
+  apply IHl1 with l2 in H.
+  apply repeats_trans.
+  exact H.
+  
+  intros x0 H2.
+  apply H0.
+  apply ai_later.
+  exact H2.
+
+  inversion H1.
+  
+  apply appears_in_app_split with x in H0.
+
+ 
+  inversion H2.
+  exact H3.
+  apply repeats_base.
+  
+  
+
+
+  intros l2 H H0 H1.
+  inversion H1.
+
+  intros l2 H H0 H1.
+  unfold excluded_middle in H.
+  apply repeats_trans.
+  apply IHl1 with l2.
+  exact H.
+  intros x0 H2.
+  apply H0.
+  apply ai_later. exact H2.
+  simpl in H1.
+  inversion H1.
+  
+
+
+
+  apply repeats_base.
+
+*)
+
+
+         
 (** [] *)
 
 (* $Date: 2013-07-17 16:19:11 -0400 (Wed, 17 Jul 2013) $ *)

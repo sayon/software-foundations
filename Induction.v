@@ -564,7 +564,7 @@ Qed.
 Fixpoint ble_nat (n:nat) (m:nat)  : bool :=
    match n, m with 
    | 0, 0 => true
-   | 0, S _ => false 
+   | 0, S _ => true 
    | S _, 0 => false 
    | S a, S b => ble_nat a b
    end.
