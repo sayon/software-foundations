@@ -27,6 +27,7 @@ Proof.
   by   rewrite Hodd in Hn.
 Qed.
 
+
 Lemma double_eq n m: n.*2 = m.*2 -> n = m.
 Proof.
   rewrite <- !mul2n.
@@ -59,25 +60,142 @@ Proof.
 Qed.
 
 
-
-Lemma helper n m: n * n =  2 * m * m -> odd n = false -> (n * n)./2 = m*m.
+Lemma even_div_2 n: odd n = false -> n = (n./2).*2.
 Proof.
-  move=> H Hodd.
-
-  assert (n *n = (n * n) ./2 .*2).
-  apply /eqP.
-  assert (n * n =  odd (n * n) + ((n*n)./2).*2 ).
-  symmetry.
-  exact (odd_double_half (n * n)).
-  assert (odd (n * n) = false). by rewrite -(odd_sq n).
-
-  rewrite H1 in H0. rewrite add0n in H0.
-  by apply /eqP.
-  rewrite H.
-  rewrite - mulnA.
-  rewrite mul2n.
-  by replace ((m*m).*2) with (false + (m*m).*2); first by rewrite half_bit_double .
+  move : (odd_double_half n) => Hn Hoddn.
+  rewrite Hoddn in Hn.
+  by symmetry.
 Qed.
+
+Lemma square_div_square n m d: n = d * m -> d != 0-> n*n = d * d * (m * m).
+  move=> -> =>Hd.
+  rewrite - mulnA.
+  rewrite - mulnA.
+  apply /eqP.
+  rewrite (eqn_mul2l d ).
+  case (d == 0). by [].
+  simpl.
+  rewrite mulnA mulnCA.
+  by rewrite mulnA.
+Qed.
+
+Lemma even_mul_2 n m: n = 2 * m -> odd n = false.
+Proof.
+  rewrite mul2n => ->.
+  exact: odd_double.
+Qed.
+    
+
+Lemma trans n m: n*n = 2*(m*m) -> (n./2) * (n./2) = 2*((m./2) * (m./2)).
+Proof.
+  move => Hnm.
+  assert( Heven: odd n = false ).
+  apply odd_injective in Hnm.
+  by rewrite !odd_mul  !and_a_a in Hnm.
+  
+  assert( Hn: n = 2 * n./2).
+  rewrite mul2n.
+  by apply even_div_2.
+  
+  move: (square_div_square n n./2 2 Hn) => Hn'.
+  rewrite Hn' in Hnm ; last by [].
+  move/eqP in Hnm.
+  rewrite -mulnA eqn_mul2l in Hnm.
+  simpl in Hnm.
+  
+  assert (Hm: m = 2* (m./2)).
+  move/eqP in Hnm.
+  symmetry in Hnm.
+  apply even_mul_2 in Hnm.
+  rewrite -odd_sq in Hnm.
+  rewrite mul2n.
+  by apply (even_div_2 m).
+
+  rewrite  Hm -mulnA eqn_mul2l in Hnm.
+  simpl in Hnm.
+  move/eqP in Hnm. symmetry in Hnm.
+  rewrite mulnC -mulnA in Hnm.  
+  by symmetry.
+Qed.
+
+Lemma leq_n_succ n: n <= n.+1.
+  by  elim n => //=. 
+Qed.
+
+Lemma half_succ_leq n:  (n.+1)./2 <= n.
+Proof.
+  move: (odd_double_half n) =>Hodd.
+  symmetry in Hodd.
+  rewrite {2} Hodd.
+  simpl.
+  rewrite uphalf_half leq_add2l -addnn.
+  assert (H: n./2 + 0 <= n./2 + n./2).
+  by rewrite leq_add2l.
+  by rewrite addn0 in H.
+Qed.
+
+Lemma leq_split n m: n <= m.+1 -> (n == m.+1) || (n <= m).
+  rewrite (leq_eqVlt n (m.+1) ).
+  by  case (n == m.+1).
+Qed.
+Lemma leq_n_half n : n./2 <= n.
+  induction n.
+    by [].
+  simpl.
+  rewrite uphalf_half.
+
+  case( odd n).
+  by rewrite add1n.
+  apply leq_trans with n; first by rewrite add0n.
+  by [].
+Qed.
+
+  
+Lemma leq_succ_half_leq n m: n <= m.+1 -> n./2 <= m.
+Proof.
+  move => Hnm; apply leq_split in Hnm. 
+  move/orP in Hnm.
+  inversion Hnm.
+  move /eqP in H. rewrite H.
+  by apply half_succ_leq.
+  apply leq_trans with n./2.
+  by [].
+  apply leq_trans with n.
+  by apply leq_n_half.
+  exact: H.
+Qed.
+
+Lemma half_0 n: n./2 = 0 <-> n == 0 \/ n == 1.
+Proof.
+  split.
+  move: (odd_double_half n) => Hodd.
+  move=> Hn. 
+  rewrite Hn  double0 addn0 in Hodd.
+  move:   ( leq_b1 (odd n)) => Hrange.
+  destruct n.
+  by left.
+  destruct n.
+  by right.
+  by destruct n.
+  
+  move=> Hn. inversion Hn; move /eqP in H; by rewrite H.
+Qed.
+
+Lemma mul_greater a b c: a * b = c -> ( a <= c )  && (b <= c).
+Proof.
+move: (leq_total a c) => Hac. 
+move: (leq_total b c) => Hbc.
+move /orP in Hac.
+move /orP in Hbc.
+ inversion Hac; inversion Hbc; try rewrite H; try rewrite H0; try simpl.
+  by [].
+  induction a.
+    by [].
+simpl.
+
+     by rewrite H H0.
+  
+by [].
 
 Lemma aux n p:  n * n = 2 * p * p  -> p = 0 .
   elim:  n {1 3 4}n (leqnn n) p.
@@ -88,6 +206,47 @@ Lemma aux n p:  n * n = 2 * p * p  -> p = 0 .
   
   (* trans *)
   move=> n H m Hleq p Hmp.
+  rewrite -mulnA in Hmp.
+  move: (trans m p Hmp) => Hmptr.
+  assert (Hm: m./2 <= n). by apply leq_succ_half_leq in Hleq.
+    
+  assert(Hp:  p./2 = 0).
+  apply ( H (m./2) Hm (p./2) ).
+  by rewrite mulnA in Hmptr.
+  apply half_0 in Hp.
+  inversion Hp; move /eqP in H0; first by [].
+  rewrite H0 !muln1 in Hmp.
+  rewrite H0 in Hmptr.
+  simpl in Hmptr.
+  rewrite !muln0 in Hmptr.
+
+  compute in Hmp.
+  
+  by apply/eqP.
+  move /eqP
+  apply H with m./2.
+.
+
+  by  apply leq_succ_half_leq.
+    
+  assert(Hmhalf:  m./2 <= n ).
+  by apply leq_succ_half_leq.
+  apply H with (m./2) p  in Hmhalf .
+  rewrite Hmhalf in Hmp. rewrite Hmhalf.
+  by [].
+  apply H with (m./2) p in Hmhalf.
+ 
+  apply leq_succ_half_leq.
+
+  rewrite /leq.
+  rewrite /leq in Hleq.
+  case Hm: (m == n.+1).
+  move /eqP in Hm.
+    
+  induction m.
+  by [].
+    
+
 
   assert (Heven_m: odd m = false). by rewrite  (odd_sq m) Hmp !odd_mul.
 

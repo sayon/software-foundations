@@ -89,8 +89,8 @@ apply double_even; rewrite double_div2; auto.
 rewrite main_thm_aux; auto.
 assert (H4: div2 p = 0).
 apply (H (div2 n)).
-apply lt_div2; apply neq_O_lt; auto.
-apply double_inv; apply double_inv; (repeat rewrite main_thm_aux); auto.
+apply lt_div2. apply neq_O_lt. auto.
+apply double_inv. apply double_inv. (repeat rewrite main_thm_aux). auto.
 rewrite (even_double p). auto. rewrite H4. auto.
 Qed.
 

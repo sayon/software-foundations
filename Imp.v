@@ -567,6 +567,86 @@ Fixpoint optimize_mult_2_sum (e: aexp) : aexp :=
   | o => o
   end.
 
+Lemma either_2_or_not: forall n, n = 2 \/ n <> 2.
+Proof.
+  intros n.
+  case n.
+  right. auto.
+  intros.
+  case n0.
+  right. auto.
+  intros n1.
+  case n1.
+  left. reflexivity.
+  intros n2.
+  right.
+  unfold not.
+  intro H.
+  inversion H.
+Qed.
+
+
+
+Theorem optimize_mult_2_sum_sound: forall e, aeval( optimize_mult_2_sum e ) = aeval( e ).
+Proof.
+  intros e.
+  induction e; try reflexivity.  
+  destruct e1, e2; try reflexivity.
+  assert (n = 2 \/ n <> 2).
+  apply either_2_or_not.
+  assert (n0 = 2 \/ n0 <> 2).
+  apply either_2_or_not.
+  inversion H.
+  inversion H0.
+  rewrite H1, H2.
+  reflexivity.
+  rewrite H1.
+  simpl. rewrite plus_0_r. reflexivity.
+  inversion H0. rewrite H2.
+  simpl.
+  case n.
+  reflexivity.
+  intro n1.
+  case n1.
+  reflexivity.
+  intro n2.
+  case n2.
+  reflexivity.
+  intro n3.
+  simpl.
+  
+
+  induction n.
+  reflexivity.
+y.
+
+  compute.
+  
+  simpl.
+
+  rewrite H2.
+  simpl.     
+  
+  assert ( aeval e1 = 2 \/ aeval e1 <> 2).
+  apply either_2_or_not.
+  assert ( aeval e2 = 2 \/ aeval e2 <> 2).
+  apply either_2_or_not.
+
+replace (aeval (AMult e1 e2)) with (aeval e1 * aeval e2).
+  inversion H. inversion H0.
+  
+  compute.
+
+  auto.
+  
+
+  unfold optimize_mult_2_sum.
+  simpl.
+
+
+
+
+
 (** [] *)
 
 (* ####################################################### *)
@@ -1025,7 +1105,6 @@ Proof.
 Qed.
 
 
-
 (** [] *)
 
 (** **** Exercise: 1 star (update_example) *)
@@ -1457,7 +1536,15 @@ Example ceval_example2:
     (X ::= ANum 0;; Y ::= ANum 1;; Z ::= ANum 2) / empty_state ||
     (update (update (update empty_state X 0) Y 1) Z 2).
 Proof.
-  (* FILL IN HERE *) Admitted.
+    apply E_Seq with (update empty_state X 0).
+    apply E_Ass.
+    reflexivity.
+    apply E_Seq with (update (update empty_state X 0) Y 1).
+    apply E_Ass. reflexivity.
+    apply E_Ass. reflexivity.
+Qed.
+   
+
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (pup_to_n) *)
@@ -1466,8 +1553,7 @@ Proof.
    Prove that this program executes as intended for X = 2
    (this latter part is trickier than you might expect). *)
 
-Definition pup_to_n : com :=
-  (* FILL IN HERE *) admit.
+Definition pup_to_n : com := Admitted.
 
 Theorem pup_to_2_ceval :
   pup_to_n / (update empty_state X 2) ||
